@@ -115,6 +115,6 @@
                 android:inputType="textPersonName|textNoSuggestions"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
-
+<!--TODO Insert UI element for difficulty selection-->
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

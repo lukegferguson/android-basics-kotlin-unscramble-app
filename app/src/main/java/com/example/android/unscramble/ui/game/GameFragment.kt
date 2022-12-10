@@ -64,26 +64,30 @@ class GameFragment : Fragment() {
         // Setup a click listener for the Submit and Skip buttons.
         binding.submit.setOnClickListener { onSubmitWord() }
         binding.skip.setOnClickListener { onSkipWord() }
-        // Update the UI
-        updateNextWordOnScreen()
-        binding.score.text = getString(R.string.score, 0)
-        binding.wordCount.text = getString(
-                R.string.word_count, 0, MAX_NO_OF_WORDS)
+
+
+        //Observe the LiveData for currentScrambledWord, passing in the LifeCycleOwner and the observer.
+        //Lambda updates the textView, newWord is a variable referring to the value of currentScrabledWord after its been updated
+        viewModel.currentScrambledWord.observe(viewLifecycleOwner) {newWord -> binding.textViewUnscrambledWord.text = newWord}
+        //Implement LiveData for score and currentWordCount
+        viewModel.score.observe(viewLifecycleOwner) {newScore -> binding.score.text = getString(R.string.score, newScore)}
+        viewModel.currentWordCount.observe(viewLifecycleOwner) { newWordCount ->
+            binding.wordCount.text =
+                getString(R.string.word_count, newWordCount, MAX_NO_OF_WORDS)
+        }
+
     }
 
     /*
     * Checks the user's word, and updates the score accordingly.
-    * Displays the next scrambled word.
+    * Displays the next scrambled word if MAX_NO_OF_WORDS has not been reached
     */
     private fun onSubmitWord() {
         val playerWord = binding.textInputEditText.text.toString()
+
         if (viewModel.isUserWordCorrect(playerWord)) {
             setErrorTextField(false)
-            if (viewModel.nextWord()) {
-                updateNextWordOnScreen()
-            } else {
-                showFinalScoreDialog()
-            }
+            if (!viewModel.nextWord()) { showFinalScoreDialog() }
         } else {
             setErrorTextField(true)
         }
@@ -96,7 +100,7 @@ class GameFragment : Fragment() {
     private fun onSkipWord() {
         if (viewModel.nextWord()) {
             setErrorTextField(false)
-            updateNextWordOnScreen()
+
         } else {
             showFinalScoreDialog()
         }
@@ -118,7 +122,7 @@ class GameFragment : Fragment() {
     private fun showFinalScoreDialog(){
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.congratulations))
-            .setMessage(getString(R.string.you_scored, viewModel.score))
+            .setMessage(getString(R.string.you_scored, viewModel.score.value))
             .setCancelable(false) //Makes the dialog ignore the back button
             .setNegativeButton(getString(R.string.exit)) { _, _ -> exitGame() }
             .setPositiveButton(getString(R.string.play_again)) { _, _ -> restartGame() }
@@ -135,7 +139,7 @@ class GameFragment : Fragment() {
     private fun restartGame() {
         viewModel.reinitializeData()
         setErrorTextField(false)
-        updateNextWordOnScreen()
+
     }
 
     /*
@@ -158,10 +162,5 @@ class GameFragment : Fragment() {
         }
     }
 
-    /*
-     * Displays the next scrambled word on screen.
-     */
-    private fun updateNextWordOnScreen() {
-        binding.textViewUnscrambledWord.text = viewModel.currentScrambledWord
-    }
+
 }
