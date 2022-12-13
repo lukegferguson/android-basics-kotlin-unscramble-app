@@ -21,6 +21,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.android.unscramble.R
@@ -47,7 +48,7 @@ class GameFragment : Fragment() {
             savedInstanceState: Bundle?
     ): View {
         // Inflate the layout XML file and return a binding object instance
-        binding = GameFragmentBinding.inflate(inflater, container, false)
+        binding = DataBindingUtil.inflate(inflater, R.layout.game_fragment, container, false)
         Log.d("GameFragment", "GameFragment created/re-created")
         Log.d("GameFragment", "Word: ${viewModel.currentScrambledWord} " + "Score: ${viewModel.score} WordCount: ${viewModel.currentWordCount}")
         return binding.root
@@ -61,20 +62,16 @@ class GameFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        //initialize data binding layout variables
+        binding.gameViewModel = viewModel
+        binding.maxNoOfWords = MAX_NO_OF_WORDS
+
+        //Specify the fragment as the lifecycle owner for the data binding can observe LiveData updates
+        binding.lifecycleOwner = viewLifecycleOwner
+
         // Setup a click listener for the Submit and Skip buttons.
         binding.submit.setOnClickListener { onSubmitWord() }
         binding.skip.setOnClickListener { onSkipWord() }
-
-
-        //Observe the LiveData for currentScrambledWord, passing in the LifeCycleOwner and the observer.
-        //Lambda updates the textView, newWord is a variable referring to the value of currentScrabledWord after its been updated
-        viewModel.currentScrambledWord.observe(viewLifecycleOwner) {newWord -> binding.textViewUnscrambledWord.text = newWord}
-        //Implement LiveData for score and currentWordCount
-        viewModel.score.observe(viewLifecycleOwner) {newScore -> binding.score.text = getString(R.string.score, newScore)}
-        viewModel.currentWordCount.observe(viewLifecycleOwner) { newWordCount ->
-            binding.wordCount.text =
-                getString(R.string.word_count, newWordCount, MAX_NO_OF_WORDS)
-        }
 
     }
 
@@ -92,6 +89,7 @@ class GameFragment : Fragment() {
             setErrorTextField(true)
         }
     }
+    //TODO implement check for correct word length and use different error msg
 
     /*
      * Skips the current word without changing the score.
